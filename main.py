@@ -6,11 +6,13 @@ from PyQt5.QtWidgets import QApplication, QWidget, QPushButton, QVBoxLayout, QSp
 from PyQt5.QtWidgets import QMainWindow, QLabel, QLineEdit
 
 # API_URL = 'http://127.0.0.1:12345'
+from PyQt5 import uic
+
 API_URL = 'http://192.168.88.15:12345'
 user = None
 
 
-class User(object):
+class User:
     @staticmethod
     def create(json):
         if json['type'] == 'parent':
@@ -33,8 +35,9 @@ class Parent(User):
         super().__init__(name)
         self.children = children
 
-    def num_children(self):
-        return len(self.children)
+    def get_children(self):
+        return self.children
+
 
 
 class AuthorizationForm(QMainWindow):
@@ -43,36 +46,9 @@ class AuthorizationForm(QMainWindow):
         self.initUI()
 
     def initUI(self):
-        layout = QVBoxLayout()
-        layout.setSpacing(10)
-        layout.setAlignment(Qt.AlignTop)
-
-        self.username_input = QLineEdit()
-        layout.addWidget(QLabel('Логин:'))
-        layout.addWidget(self.username_input)
-
-        layout.addSpacerItem(QSpacerItem(0, 20, vPolicy=QSizePolicy.Minimum))
-
-        self.password_input = QLineEdit()
-        layout.addWidget(QLabel('Пароль:'))
-        layout.addWidget(self.password_input)
-
-        self.auth_error = QLabel()
-        self.auth_error.setStyleSheet('QLabel { color: "red" }')
+        uic.loadUi('uis\\login.ui', self)
         self.auth_error.hide()
-        layout.addWidget(self.auth_error)
-
-        layout.addSpacerItem(QSpacerItem(1, 1, vPolicy=QSizePolicy.Expanding))
-
-        button = QPushButton('Вход')
-        button.clicked.connect(self.authorise)
-        layout.addWidget(button)
-
-        wid = QWidget(self)
-        wid.setLayout(layout)
-        self.setCentralWidget(wid)
-        self.setGeometry(300, 300, 400, 300)
-        self.setWindowTitle('Авторизация')
+        self.pushButton.clicked.connect(self.authorise)
         self.show()
 
     def show_error(self, message='Ошибка авторизации'):
@@ -90,6 +66,7 @@ class AuthorizationForm(QMainWindow):
                 raise ValueError()
             user = User.create(r.json())
             self.form = self.create_main_form()
+            self.hide()
         except (ValueError, requests.exceptions.RequestException):
             self.show_error()
 
@@ -100,18 +77,25 @@ class AuthorizationForm(QMainWindow):
             raise ValueError()
 
 
-class ParentForm(QWidget):
+class ParentForm(QMainWindow):
     def __init__(self, *args):
         super().__init__()
         self.initUI(args)
 
+    def add_child(self, child):
+        child_ui = QWidget()
+        uic.loadUi('uis\\child_card.ui', child_ui)
+        child_ui.child_label.setText(child['label']['rus'])
+        return child_ui
+
+
     def initUI(self, args):
-        layout = QVBoxLayout()
-        layout.addWidget(QLabel(user.get_name() + ":" + str(user.num_children()) + " children"))
-        self.setLayout(layout)
-        self.setGeometry(300, 300, 300, 300)
-        self.setWindowTitle('Форма родителя')
+        uic.loadUi('uis\\parent_form.ui', self)
+        for _ in user.get_children():
+            self.child_list.addWidget(self.add_child(_))
+        self.setWindowTitle(user.get_name())
         self.show()
+
 
 
 if __name__ == '__main__':
