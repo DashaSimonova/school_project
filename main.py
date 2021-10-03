@@ -15,6 +15,7 @@ user = None
 class User:
     @staticmethod
     def create(json):
+        #print(json)
         if json['type'] == 'parent':
             return Parent(json['name'], json['children'])
         else:
@@ -39,7 +40,6 @@ class Parent(User):
         return self.children
 
 
-
 class AuthorizationForm(QMainWindow):
     def __init__(self):
         super().__init__()
@@ -50,6 +50,8 @@ class AuthorizationForm(QMainWindow):
         self.auth_error.hide()
         self.pushButton.clicked.connect(self.authorise)
         self.show()
+        self.username_input.setText('user1')
+        self.password_input.setText('1234')
 
     def show_error(self, message='Ошибка авторизации'):
         self.auth_error.setText(message)
@@ -82,23 +84,45 @@ class ParentForm(QMainWindow):
         super().__init__()
         self.initUI(args)
 
-    def add_child(self, child):
-        child_ui = QWidget()
-        uic.loadUi('uis\\child_card.ui', child_ui)
-        child_ui.child_label.setText(child['label']['rus'])
-        return child_ui
-
-
     def initUI(self, args):
         uic.loadUi('uis\\parent_form.ui', self)
         for _ in user.get_children():
-            self.child_list.addWidget(self.add_child(_))
+            self.child_list.addWidget(ChildWidget(_))
         self.setWindowTitle(user.get_name())
         self.show()
 
 
+class ChildWidget(QWidget):
+    def __init__(self, child):
+        super().__init__()
+        uic.loadUi('uis\\child_card.ui', self)
+        self.child_label.setText(child['label']['rus'])
+        self.pushButton.clicked.connect(self.choose_time)
+        self.child_obj = child
+        self.time_list.hide()
+        self.choose_timebutton.hide()
+        self.choose_timebutton.clicked.connect(self.save_time)
+
+    def choose_time(self):
+        self.time_list.show()
+        self.pushButton.hide()
+        self.choose_timebutton.show()
+        for _ in self.child_obj['times']:
+            self.time_list.addItem(_)
+
+    def save_time(self):
+        print(self.time_list.currentText())
+        self.pushButton.show()
+        self.time_list.hide()
+        self.choose_timebutton.hide()
+
+
+
 
 if __name__ == '__main__':
-    app = QApplication(sys.argv)
-    frm = AuthorizationForm()
-    sys.exit(app.exec())
+    try:
+        app = QApplication(sys.argv)
+        frm = AuthorizationForm()
+        sys.exit(app.exec())
+    except Exception as e:
+        print(str(e))
