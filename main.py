@@ -1,43 +1,22 @@
+import os
 import sys
+import datetime as dt
 
 import requests
-from PyQt5.QtCore import Qt
-from PyQt5.QtWidgets import QApplication, QWidget, QPushButton, QVBoxLayout, QSpacerItem, QSizePolicy
-from PyQt5.QtWidgets import QMainWindow, QLabel, QLineEdit
+from PyQt5.QtWidgets import QApplication, QWidget
+from PyQt5.QtWidgets import QMainWindow
+from user import User
 
-# API_URL = 'http://127.0.0.1:12345'
+# API_URL = 'http://127.0.0.1:12345/index.json'
 from PyQt5 import uic
 
 API_URL = 'http://192.168.88.15:12345'
 user = None
+DELTA_MIN = 15
 
 
-class User:
-    @staticmethod
-    def create(json):
-        #print(json)
-        if json['type'] == 'parent':
-            return Parent(json['name'], json['children'])
-        else:
-            raise ValueError('Неизвестный тип пользователя')
-
-    def is_parent(self):
-        return isinstance(self, Parent)
-
-    def __init__(self, name):
-        self.name = name
-
-    def get_name(self):
-        return self.name
-
-
-class Parent(User):
-    def __init__(self, name, children):
-        super().__init__(name)
-        self.children = children
-
-    def get_children(self):
-        return self.children
+def load_ui(ui, obj):
+    uic.loadUi(os.path.join('uis', ui), obj)
 
 
 class AuthorizationForm(QMainWindow):
@@ -46,11 +25,11 @@ class AuthorizationForm(QMainWindow):
         self.initUI()
 
     def initUI(self):
-        uic.loadUi('uis\\login.ui', self)
+        load_ui('login.ui', self)
         self.auth_error.hide()
         self.pushButton.clicked.connect(self.authorise)
         self.show()
-        self.username_input.setText('user1')
+        self.username_input.setText('mr.gerson')
         self.password_input.setText('1234')
 
     def show_error(self, message='Ошибка авторизации'):
@@ -75,6 +54,8 @@ class AuthorizationForm(QMainWindow):
     def create_main_form(self):
         if user.is_parent():
             return ParentForm()
+        elif user.is_teacher():
+            return TeacherForm()
         else:
             raise ValueError()
 
@@ -85,9 +66,22 @@ class ParentForm(QMainWindow):
         self.initUI(args)
 
     def initUI(self, args):
-        uic.loadUi('uis\\parent_form.ui', self)
+        load_ui('parent_form.ui', self)
         for _ in user.get_children():
             self.child_list.addWidget(ChildWidget(_))
+        self.setWindowTitle(user.get_name())
+        self.show()
+
+
+class TeacherForm(QMainWindow):
+    def __init__(self, *args):
+        super().__init__()
+        self.initUI(args)
+
+    def initUI(self, args):
+        load_ui('parent_form.ui', self)
+        # for _ in user.get_children():
+        #     self.child_list.addWidget(ChildWidget(_))
         self.setWindowTitle(user.get_name())
         self.show()
 
@@ -95,7 +89,7 @@ class ParentForm(QMainWindow):
 class ChildWidget(QWidget):
     def __init__(self, child):
         super().__init__()
-        uic.loadUi('uis\\child_card.ui', self)
+        load_ui('child_card.ui', self)
         self.child_label.setText(child['label']['rus'])
         self.pushButton.clicked.connect(self.choose_time)
         self.child_obj = child
@@ -103,11 +97,16 @@ class ChildWidget(QWidget):
         self.choose_timebutton.hide()
         self.choose_timebutton.clicked.connect(self.save_time)
 
+    def filter_time(self, tim):
+        h, m = tim.split(':')
+        time_real = dt.time(int(h), int(m))
+        return time_real > (dt.datetime.now() + dt.timedelta(minutes=DELTA_MIN)).time()
+
     def choose_time(self):
         self.time_list.show()
         self.pushButton.hide()
         self.choose_timebutton.show()
-        for _ in self.child_obj['times']:
+        for _ in list(filter(self.filter_time, self.child_obj['times'])):
             self.time_list.addItem(_)
 
     def save_time(self):
@@ -115,8 +114,6 @@ class ChildWidget(QWidget):
         self.pushButton.show()
         self.time_list.hide()
         self.choose_timebutton.hide()
-
-
 
 
 if __name__ == '__main__':
