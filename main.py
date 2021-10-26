@@ -1,3 +1,4 @@
+import datetime
 import os
 import sys
 import datetime as dt
@@ -5,12 +6,13 @@ import datetime as dt
 import requests
 from PyQt5.QtWidgets import QApplication, QWidget
 from PyQt5.QtWidgets import QMainWindow
+
 from user import User
 
-# API_URL = 'http://127.0.0.1:12345/index.json'
+API_URL = 'http://127.0.0.1:12345/index.json'
 from PyQt5 import uic
 
-API_URL = 'http://192.168.88.15:12345'
+# API_URL = 'http://192.168.88.15:12345'
 user = None
 DELTA_MIN = 15
 
@@ -68,7 +70,7 @@ class ParentForm(QMainWindow):
     def initUI(self, args):
         load_ui('parent_form.ui', self)
         for _ in user.get_children():
-            self.child_list.addWidget(ChildWidget(_))
+            self.child_list.addWidget(ChildWidget(_, user.get_times()))
         self.setWindowTitle(user.get_name())
         self.show()
 
@@ -87,12 +89,13 @@ class TeacherForm(QMainWindow):
 
 
 class ChildWidget(QWidget):
-    def __init__(self, child):
+    def __init__(self, child, times):
         super().__init__()
         load_ui('child_card.ui', self)
         self.child_label.setText(child['label']['rus'])
         self.pushButton.clicked.connect(self.choose_time)
         self.child_obj = child
+        self.times = times
         self.time_list.hide()
         self.choose_timebutton.hide()
         self.choose_timebutton.clicked.connect(self.save_time)
@@ -106,7 +109,7 @@ class ChildWidget(QWidget):
         self.time_list.show()
         self.pushButton.hide()
         self.choose_timebutton.show()
-        for _ in list(filter(self.filter_time, self.child_obj['times'])):
+        for _ in list(filter(self.filter_time, self.times)):
             self.time_list.addItem(_)
 
     def save_time(self):
