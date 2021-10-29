@@ -9,7 +9,7 @@ class User:
         if json['type'] == 'parent':
             return Parent(json['name'], json['children'], json['times'])
         if json['type'] == 'teacher':
-            return Teacher(json['name'])
+            return Teacher(json['name'], json['children'])
         else:
             raise ValueError('Неизвестный тип пользователя')
 
@@ -47,4 +47,11 @@ class Parent(User):
 
 
 class Teacher(User):
-    pass
+    def __init__(self, name, children):
+        super().__init__(name)
+        self.name = name
+        self.children = children
+
+    def get_children(self):
+        return self.children
+
