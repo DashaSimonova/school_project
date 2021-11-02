@@ -6,6 +6,7 @@ import datetime as dt
 class User:
     @staticmethod
     def create(json):
+        print(json)
         if json['type'] == 'parent':
             return Parent(json['name'], json['children'], json['times'])
         if json['type'] == 'teacher':
@@ -32,12 +33,15 @@ class Parent(User):
         self.children = children
         self.times = self.make_times(times)
 
-    def make_times(self, tm):
-        date_begin = datetime.datetime.strptime(tm["from"], "%H:%M")
-        date_end = datetime.datetime.strptime(tm["to"], "%H:%M")
-        return [(date_begin + dt.timedelta(minutes=i)).strftime("%H:%M") for i in
-             range(0, int((date_end - date_begin).total_seconds() / 60) + 1, tm["step"])]
+    @staticmethod
+    def str_to_datetime(str_time):
+        return datetime.datetime.strptime(str_time, "%H:%M")
 
+    def make_times(self, tm):
+        date_begin = self.str_to_datetime(tm['from'])
+        date_end = self.str_to_datetime(tm['to'])
+        return [(date_begin + dt.timedelta(minutes=i)).strftime("%H:%M") for i in
+                range(0, int((date_end - date_begin).total_seconds() / 60) + 1, tm["step"])]
 
     def get_children(self):
         return self.children
