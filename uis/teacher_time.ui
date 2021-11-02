@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>778</width>
+    <width>448</width>
     <height>468</height>
    </rect>
   </property>
@@ -14,15 +14,15 @@
    <string>Form</string>
   </property>
   <property name="styleSheet">
-   <string notr="true">QWidget { border: 2px solid black }</string>
+   <string notr="true">QWidget { border: 1px solid black }</string>
   </property>
   <widget class="QLabel" name="time_title">
    <property name="geometry">
     <rect>
-     <x>13</x>
-     <y>23</y>
-     <width>137</width>
-     <height>38</height>
+     <x>1</x>
+     <y>1</y>
+     <width>391</width>
+     <height>36</height>
     </rect>
    </property>
    <property name="font">
@@ -37,13 +37,17 @@
   <widget class="QWidget" name="verticalLayoutWidget">
    <property name="geometry">
     <rect>
-     <x>10</x>
-     <y>70</y>
-     <width>261</width>
-     <height>231</height>
+     <x>30</x>
+     <y>40</y>
+     <width>361</width>
+     <height>241</height>
     </rect>
    </property>
-   <layout class="QVBoxLayout" name="child_container"/>
+   <layout class="QVBoxLayout" name="child_container">
+    <property name="leftMargin">
+     <number>10</number>
+    </property>
+   </layout>
   </widget>
  </widget>
  <resources/>

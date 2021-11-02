@@ -1,6 +1,8 @@
 from django.contrib.auth.models import User
 from django.db import models
 
+from school.application_status import ApplicationStatus
+
 
 class Classes(models.Model):
     number = models.IntegerField()
@@ -18,3 +20,4 @@ class Children(models.Model):
 class Applications(models.Model):
     child = models.ForeignKey(Children, on_delete=models.CASCADE)
     date = models.DateTimeField()
+    status = models.IntegerField(default=ApplicationStatus.CREATED)

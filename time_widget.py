@@ -1,6 +1,7 @@
 from PyQt5.QtWidgets import QWidget, QLabel
 
 from base_form import BaseForm
+from child_item_widget import ChildItemWidget
 
 
 class TimeWidget(QWidget, BaseForm):

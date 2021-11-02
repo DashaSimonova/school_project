@@ -1,6 +1,7 @@
-from PyQt5.QtWidgets import QMainWindow, QLabel
+from PyQt5.QtWidgets import QMainWindow, QLabel, QCheckBox
 
 from base_form import BaseForm
+from child_item_widget import ChildItemWidget
 from globals import Globals
 from time_widget import TimeWidget
 
@@ -20,12 +21,5 @@ class TeacherForm(QMainWindow, BaseForm):
             lbl.setStyleSheet('QLabel { font-size: 18pt; font-weight: bold; margin-top: 10px }')
             self.child_list.addWidget(lbl)
             for childitem in childlist:
-                lblc = QLabel()
-                lblc.setText(childitem['label']['eng'])
-                lblc.setStyleSheet('QLabel { font-size: 14pt; margin-left: 20px }')
-                self.child_list.addWidget(lblc)
-                #     self.child_list.addWidget(ChildItemWidget(childitem))
-
-        # verticalSpacer = QSpacerItem(20, 40, QSizePolicy.Minimum, QSizePolicy.Expanding)
-        # self.child_list.addItem(verticalSpacer)
+                self.child_list.addWidget(ChildItemWidget(childitem))
         self.show()

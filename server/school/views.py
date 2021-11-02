@@ -5,6 +5,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from django.contrib.auth.models import User
 from school.models import Children, Applications, Classes
+from school.application_status import ApplicationStatus
 
 
 @api_view(['GET'])
@@ -72,7 +73,10 @@ def get_application(child: Children):
     if app is None:
         return ''
     else:
-        return app.date
+        return {
+            'date': app.date,
+            'status': app.status
+        }
 
 
 def get_teacher_pupils(user: User):
@@ -85,7 +89,7 @@ def get_teacher_pupils(user: User):
         if app == '':
             appLabel = 'unassigned'
         else:
-            appLabel = app.strftime('%H:%M')
+            appLabel = app['date'].strftime('%H:%M')
         if appLabel not in d:
             d[appLabel] = [get_child(c)]
         else:
@@ -99,7 +103,6 @@ def get_teacher_profile(user: User):
         "name": user.get_full_name(),
         "children": get_teacher_pupils(user)
     }
-
 
 @api_view(['POST'])
 @authentication_classes([BasicAuthentication])
@@ -121,3 +124,24 @@ def create_application(request, format=None):
     app.save()
 
     return Response({'id': app.id})
+
+@api_view(['POST'])
+@authentication_classes([BasicAuthentication])
+@permission_classes([IsAuthenticated])
+def set_application_status(request, format=None):
+    print(request.POST)
+    child = Children.objects.get(id=int(request.POST.get('child_id', '')))
+    if child is None:
+        raise ValueError('Unknown child')
+
+    app = get_today_application(child).first()
+    if app is None:
+        raise ValueError('Unknown application')
+
+    status = int(request.POST.get('status', ''))
+    if not ApplicationStatus.valid(status):
+        raise ValueError('Invalid status')
+
+    app.status = status
+    app.save()
+    return Response({'id': app.id, status: app.status})

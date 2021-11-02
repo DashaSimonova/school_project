@@ -4,6 +4,7 @@ from PyQt5.QtWidgets import QWidget
 
 from base_form import BaseForm
 from globals import Globals
+from server.school.application_status import ApplicationStatus
 
 DELTA_MIN = 15
 
@@ -17,7 +18,7 @@ class ChildWidget(QWidget, BaseForm):
 
         application = self.child_obj['application']
         if application != '':
-            self.appTime = dt.datetime.fromisoformat(self.child_obj['application']).strftime('%H:%M')
+            self.appTime = dt.datetime.fromisoformat(self.child_obj['application']['date']).strftime('%H:%M')
         else:
             self.appTime = None
 
@@ -49,12 +50,18 @@ class ChildWidget(QWidget, BaseForm):
 
     def render_ui(self):
         self.child_label.setText(self.child_obj['label']['rus'])
-        self.pushButton.show()
         self.time_list.hide()
         self.choose_timebutton.hide()
+        self.label_alert.hide()
         if self.appTime is not None:
             self.appLabel.setText(self.appTime)
             self.appLabel.show()
-            self.pushButton.setText('Изменить')
+            if self.child_obj['application']['status'] != ApplicationStatus.CREATED:
+                self.pushButton.hide()
+                self.label_alert.show()
+            else:
+                self.pushButton.show()
+                self.pushButton.setText('Изменить')
         else:
             self.appLabel.hide()
+

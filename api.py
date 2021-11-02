@@ -18,3 +18,13 @@ class Api:
         if r.status_code != 200:
             raise ValueError()
         return r.json()
+
+    def set_application_status(self, child_id, status):
+        r = requests.post(
+            API_URL + '/set-application-status/',
+            auth=self.auth,
+            data={'child_id': child_id, 'status': status}
+        )
+        if r.status_code != 200:
+            raise ValueError()
+        return r.json()
