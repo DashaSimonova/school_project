@@ -17,8 +17,8 @@ class AuthorizationForm(QMainWindow, BaseForm):
         self.auth_error.hide()
         self.pushButton.clicked.connect(self.authorise)
         self.show()
-        self.username_input.setText('parent')
-        self.password_input.setText('1234')
+        # self.username_input.setText('parent')
+        # self.password_input.setText('1234')
 
     def show_error(self, message='Ошибка авторизации'):
         self.auth_error.setText(message)
