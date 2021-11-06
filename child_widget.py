@@ -10,11 +10,16 @@ DELTA_MIN = 15
 
 
 class ChildWidget(QWidget, BaseForm):
-    def __init__(self, child, times):
+    def __init__(self, child):
         super().__init__()
         self.load_ui('child_card.ui')
+        self.set_child(child)
+        self.pushButton.clicked.connect(self.choose_time)
+        self.choose_timebutton.clicked.connect(self.save_time)
+        self.render_ui()
+
+    def set_child(self, child):
         self.child_obj = child
-        self.times = times
 
         application = self.child_obj['application']
         if application != '':
@@ -22,21 +27,12 @@ class ChildWidget(QWidget, BaseForm):
         else:
             self.appTime = None
 
-        self.pushButton.clicked.connect(self.choose_time)
-        self.choose_timebutton.clicked.connect(self.save_time)
-        self.render_ui()
-
-    def filter_time(self, tim):
-        h, m = tim.split(':')
-        time_real = dt.time(int(h), int(m))
-        return time_real > (dt.datetime.now() + dt.timedelta(minutes=DELTA_MIN)).time()
-
     def choose_time(self):
         self.time_list.show()
         self.pushButton.hide()
         self.appLabel.hide()
         self.choose_timebutton.show()
-        for time in list(filter(self.filter_time, self.times)):
+        for time in Globals.parent().get_future_times(DELTA_MIN):
             self.time_list.addItem(time)
         if self.appTime is not None:
             index = self.time_list.findText(self.appTime)
@@ -45,10 +41,15 @@ class ChildWidget(QWidget, BaseForm):
 
     def save_time(self):
         self.appTime = self.time_list.currentText()
-        Globals.api.create_application(self.child_obj['id'], self.appTime)
+        json = Globals.api.create_application(self.child_obj['id'], self.appTime)
+        if not json:
+            return
+        Globals.parent().children = json['children']
+        self.set_child(Globals.parent().get_child_by_id(self.child_obj['id']))
         self.render_ui()
 
     def render_ui(self):
+        print(self.child_obj)
         self.child_label.setText(self.child_obj['label']['rus'])
         self.time_list.hide()
         self.choose_timebutton.hide()
@@ -56,6 +57,7 @@ class ChildWidget(QWidget, BaseForm):
         if self.appTime is not None:
             self.appLabel.setText(self.appTime)
             self.appLabel.show()
+            print(self.child_obj)
             if self.child_obj['application']['status'] != ApplicationStatus.CREATED:
                 self.pushButton.hide()
                 self.label_alert.show()

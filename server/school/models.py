@@ -9,6 +9,9 @@ class Classes(models.Model):
     letter = models.CharField(max_length=1, null=True)
     teacher = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
 
+    def __str__(self):
+        return ('%d %s' % (self.number, self.letter)).rstrip()
+
 
 class Children(models.Model):
     name_rus = models.CharField(max_length=200)

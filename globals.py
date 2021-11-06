@@ -1,5 +1,5 @@
 from api import Api
-from user import User, Parent, Teacher
+from user import User, Parent, Teacher, Administrator
 
 
 class Globals:
@@ -15,9 +15,17 @@ class Globals:
         return Globals.user
 
     @staticmethod
+    def administrator() -> Administrator:
+        return Globals.user
+
+    @staticmethod
     def create_api(username: str, password: str) -> None:
         Globals.api = Api(username, password)
 
     @staticmethod
-    def create_user() -> None:
-        Globals.user = User.create(Globals.api.authorize())
+    def create_user() -> bool:
+        json = Globals.api.authorize()
+        if json is None:
+            return False
+        Globals.user = User.create(json)
+        return True

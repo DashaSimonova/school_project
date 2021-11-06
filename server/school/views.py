@@ -6,6 +6,8 @@ from rest_framework.response import Response
 from django.contrib.auth.models import User
 from school.models import Children, Applications, Classes
 from school.application_status import ApplicationStatus
+from school.user_type import UserType
+from school.time_label import TimeLabel
 
 
 @api_view(['GET'])
@@ -20,6 +22,8 @@ def get_user_profile(user: User):
         return get_parent_profile(user)
     elif is_teacher(user):
         return get_teacher_profile(user)
+    elif is_administrator(user):
+        return get_administrator_profile(user)
     else:
         return {}
 
@@ -36,15 +40,23 @@ def is_teacher(user: User):
     return has_group(user, 'Teachers')
 
 
+def is_administrator(user: User):
+    return has_group(user, 'Administrators')
+
+
+def get_available_times():
+    return {
+        "from": "17:45",
+        "to": "23:00",
+        "step": 15
+    }
+
+
 def get_parent_profile(user: User):
     return {
-        'type': 'parent',
+        'type': UserType.PARENT,
         "name": user.get_full_name(),
-        "times": {
-            "from": "17:45",
-            "to": "23:00",
-            "step": 15
-        },
+        "times": get_available_times(),
         "children": get_children(user)
     }
 
@@ -60,7 +72,8 @@ def get_child(child: Children):
             'rus': child.name_rus,
             'eng': child.name_eng
         },
-        'application': get_application(child)
+        'application': get_application(child),
+        'grade': str(child.grade)
     }
 
 
@@ -83,11 +96,15 @@ def get_teacher_pupils(user: User):
     cls = Classes.objects.filter(teacher=user).first()
     if cls is None:
         return []
+    return group_by_app_time(Children.objects.filter(grade=cls))
+
+
+def group_by_app_time(children):
     d = {}
-    for c in Children.objects.filter(grade=cls):
+    for c in children:
         app = get_application(c)
         if app == '':
-            appLabel = 'unassigned'
+            appLabel = TimeLabel.UNASSIGNED
         else:
             appLabel = app['date'].strftime('%H:%M')
         if appLabel not in d:
@@ -99,10 +116,27 @@ def get_teacher_pupils(user: User):
 
 def get_teacher_profile(user: User):
     return {
-        "type": "teacher",
+        "type": UserType.TEACHER,
         "name": user.get_full_name(),
         "children": get_teacher_pupils(user)
     }
+
+
+def get_child_with_app(child):
+    c = get_child(child)
+    c['application'] = get_application(child)
+    return c
+
+
+def get_administrator_profile(user: User):
+    return {
+        "type": UserType.ADMINISTRATOR,
+        "name": user.get_full_name(),
+        "times": get_available_times(),
+        "children": [get_child_with_app(c) for c in Children.objects.all()]
+        # "children": group_by_app_time(Children.objects.all())
+    }
+
 
 @api_view(['POST'])
 @authentication_classes([BasicAuthentication])
@@ -123,7 +157,8 @@ def create_application(request, format=None):
     )
     app.save()
 
-    return Response({'id': app.id})
+    return Response(get_user_profile(request.user))
+
 
 @api_view(['POST'])
 @authentication_classes([BasicAuthentication])
@@ -144,4 +179,4 @@ def set_application_status(request, format=None):
 
     app.status = status
     app.save()
-    return Response({'id': app.id, status: app.status})
+    return Response(get_user_profile(request.user))
