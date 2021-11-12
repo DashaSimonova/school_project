@@ -12,8 +12,10 @@ class Api:
     def request(self, url, error_message, method='post', **kwargs):
         try:
             r = requests.request(method, API_URL + url, auth=self.auth, timeout=5, **kwargs)
+            print('Status code:', r.status_code)
             if r.status_code != 200:
                 raise ValueError()
+            print('Response: ', r.text)
             return r.json()
         except (ValueError, requests.exceptions.RequestException):
             ErrorMessage.show(error_message)
